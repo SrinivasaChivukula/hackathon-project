@@ -74,13 +74,17 @@ def frame_status():
 @app.route('/api/status')
 def get_status():
     """Get current system status"""
-    current_session = logger.get_current_session()
+    try:
+        current_session = logger.get_current_session()
+    except Exception as e:
+        current_session = None
     
     return jsonify({
         'status': 'active' if current_session else 'inactive',
         'current_session_id': current_session,
         'timestamp': datetime.now().isoformat()
     })
+
 
 @app.route('/api/sessions')
 def get_sessions():
@@ -296,6 +300,16 @@ def run_api_server(host='0.0.0.0', port=5001):
     print(f"Dashboard will be available at: http://localhost:{port}")
     app.run(host=host, port=port, threaded=True, debug=False, use_reloader=False)
 
+
+@app.route('/api/shutdown', methods=['POST'])
+def shutdown():
+    """Shutdown the Flask server"""
+    func = request.environ.get('werkzeug.server.shutdown')
+    if func is None:
+        return jsonify({'error': 'Not running with the Werkzeug Server'}), 500
+    func()
+    return jsonify({'message': 'Server shutting down...'})
+
+    
 if __name__ == '__main__':
     run_api_server()
-
