@@ -1,6 +1,6 @@
 # Vision Assist IoT System
 
-AI-powered vision assistance for visually impaired patients with fall detection and emergency alerts.
+Vision assistance for visually impaired patients that require assisted living, with fall detection and emergency alerts.
 
 ## Hardware
 
