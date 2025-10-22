@@ -26,7 +26,7 @@ class VisionAssistant:
         
         # Setup TTS
         self.tts_engine = pyttsx3.init()
-        self.tts_engine.setProperty('rate', 150)  # Speed
+        self.tts_engine.setProperty('rate', 175)  # Faster speed for less lag
         self.tts_engine.setProperty('volume', 0.9)
         self.tts_lock = threading.Lock()
         
@@ -56,11 +56,12 @@ class VisionAssistant:
         self.last_inference_time = 0
         self.inference_interval = 5.0
         self.last_alert_time = {}  # Per-object cooldown
-        self.alert_cooldown = 3.0  # Don't repeat same alert within 3 seconds
+        self.alert_cooldown = 5.0  # Don't repeat same alert within 5 seconds (reduce audio spam)
         
         # Detection tracking
         self.current_detections = []
         self.scene_objects = defaultdict(int)
+        self.last_boxes_to_draw = []  # Persist boxes between inference runs
         
         # Voice command flag
         self.listening_for_command = False
@@ -98,12 +99,9 @@ class VisionAssistant:
                 self.tts_engine.say(text)
                 self.tts_engine.runAndWait()
         
-        thread = threading.Thread(target=_speak)
-        thread.daemon = True
+        thread = threading.Thread(target=_speak, daemon=True)
         thread.start()
-        
-        if priority:
-            thread.join()  # Wait for critical alerts
+        # Never block main thread, even for priority alerts
     
     def generate_proximity_alert(self, cls_name, distance_category, direction):
         """Generate natural language proximity alert"""
@@ -206,6 +204,7 @@ class VisionAssistant:
             # Reset scene tracking
             self.scene_objects.clear()
             self.current_detections = []
+            self.last_boxes_to_draw = []  # Reset boxes
             
             proximity_alerts = []
             
@@ -242,13 +241,15 @@ class VisionAssistant:
                     if self.session_id:
                         self.data_logger.log_detection(self.session_id, detection_data)
                     
-                    # Draw bounding box
+                    # Store box info for drawing
                     color = (0, 0, 255) if distance_cat == "critical" else \
                            (0, 165, 255) if distance_cat == "warning" else (0, 255, 0)
                     
-                    cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-                    cv2.putText(frame, f"{cls_name}", (x1, y1-10),
-                              cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+                    self.last_boxes_to_draw.append({
+                        'bbox': (x1, y1, x2, y2),
+                        'label': cls_name,
+                        'color': color
+                    })
                     
                     # Generate proximity alert for close objects
                     if distance_cat in ["critical", "warning"]:
@@ -270,11 +271,24 @@ class VisionAssistant:
                                     self.session_id, cls_name, distance_cat, direction, alert_text
                                 )
             
-            # Speak proximity alerts (critical first)
-            proximity_alerts.sort(key=lambda x: 0 if x[0] == "critical" else 1)
-            for distance_cat, alert in proximity_alerts[:2]:  # Max 2 alerts at once
-                self.alert_sound.play()
-                self.speak(alert, priority=(distance_cat == "critical"))
+            # Speak proximity alerts (critical first, only 1 at a time)
+            if proximity_alerts:
+                proximity_alerts.sort(key=lambda x: 0 if x[0] == "critical" else 1)
+                distance_cat, alert = proximity_alerts[0]  # Only speak the most critical one
+                
+                # Play alert sound only for critical
+                if distance_cat == "critical":
+                    self.alert_sound.play()
+                
+                # Speak the alert (non-blocking)
+                self.speak(alert)
+        
+        # Draw all bounding boxes (persists between inference runs)
+        for box_info in self.last_boxes_to_draw:
+            x1, y1, x2, y2 = box_info['bbox']
+            cv2.rectangle(frame, (x1, y1), (x2, y2), box_info['color'], 2)
+            cv2.putText(frame, box_info['label'], (x1, y1-10),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, box_info['color'], 2)
         
         return frame
     
@@ -287,43 +301,38 @@ class VisionAssistant:
         self.speak("Vision assistant started", priority=True)
         logging.info("Starting main loop")
         
+        print("=" * 60)
         print("Vision Assistant Running")
-        print("Commands: 'Describe scene', 'What's ahead'")
-        print("Press 'q' to quit, 'c' to give voice command, 's' for scene description")
-        print(f"Dashboard available at: http://localhost:5001")
+        print("=" * 60)
+        print()
+        print("📹 View live video at: http://localhost:5001")
+        print()
+        print("Voice Commands (speak naturally):")
+        print("  'Describe scene' - Get environment summary")
+        print("  'What's ahead'   - Check path ahead")
+        print()
+        print("Press Ctrl+C to quit")
+        print("=" * 60)
         
         try:
             while True:
                 ret, frame = self.cap.read()
                 if not ret:
                     logging.warning("Failed to read frame")
+                    time.sleep(0.1)
                     continue
                 
-                # Process frame
+                # Process frame (inference happens here every 5 seconds)
                 annotated_frame = self.process_frame(frame)
                 
                 # Update frame for API streaming
                 set_current_frame(annotated_frame)
                 
-                # Display
-                cv2.imshow("VisionAssist", annotated_frame)
-                
-                # Handle keyboard input
-                key = cv2.waitKey(1) & 0xFF
-                if key == ord('q'):
-                    break
-                elif key == ord('c'):
-                    command = self.listen_for_command()
-                    self.handle_voice_command(command)
-                elif key == ord('s'):
-                    # Manual scene description
-                    summary = self.summarize_scene()
-                    self.speak(summary)
-                    if self.session_id:
-                        self.data_logger.log_scene_summary(
-                            self.session_id, summary, len(self.scene_objects)
-                        )
+                # Small delay to prevent CPU spinning
+                time.sleep(0.05)  # ~20 FPS (smoother, less CPU)
         
+        except KeyboardInterrupt:
+            print("\nShutting down gracefully...")
         finally:
             self.cleanup()
     
@@ -338,7 +347,6 @@ class VisionAssistant:
         
         self.speak("Vision assistant stopping", priority=True)
         self.cap.release()
-        cv2.destroyAllWindows()
         pygame.quit()
 
 if __name__ == "__main__":

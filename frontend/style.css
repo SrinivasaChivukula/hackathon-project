@@ -184,7 +184,30 @@ body {
 }
 
 .stat-icon {
+    font-size: 48px;
+}
+
+.material-icons {
+    vertical-align: middle;
+    user-select: none;
+}
+
+.header-icon {
     font-size: 32px;
+    vertical-align: middle;
+    margin-right: 8px;
+}
+
+.card h2 .material-icons {
+    font-size: 24px;
+    vertical-align: middle;
+    margin-right: 8px;
+}
+
+.inline-icon {
+    font-size: 18px;
+    vertical-align: middle;
+    margin-right: 4px;
 }
 
 .stat-value {

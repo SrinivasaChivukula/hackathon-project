@@ -277,7 +277,7 @@ async function updateCommands() {
         
         commandsList.innerHTML = commands.map(cmd => `
             <div class="command-item">
-                <div class="command-text">🎤 "${escapeHtml(cmd.command)}"</div>
+                <div class="command-text"><span class="material-icons inline-icon">mic</span> "${escapeHtml(cmd.command)}"</div>
                 ${cmd.response ? `<div class="command-response">Response: ${escapeHtml(cmd.response)}</div>` : ''}
                 <div class="command-time">${formatTime(cmd.timestamp)}</div>
             </div>

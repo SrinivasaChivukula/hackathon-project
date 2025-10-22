@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vision Assistant Dashboard</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -12,7 +13,7 @@
         <!-- Header -->
         <header class="header">
             <div class="header-left">
-                <h1>🎯 Vision Assistant Dashboard</h1>
+                <h1><span class="material-icons header-icon">visibility</span> Vision Assistant Dashboard</h1>
                 <p class="subtitle">Caregiver Monitoring & Analytics</p>
             </div>
             <div class="header-right">
@@ -28,7 +29,7 @@
         <div class="dashboard-grid">
             <!-- Live Feed Section -->
             <section class="card live-feed-card">
-                <h2>📹 Live Feed</h2>
+                <h2><span class="material-icons">videocam</span> Live Feed</h2>
                 <div class="video-container">
                     <img id="videoFeed" src="/api/video_feed" alt="Live video feed">
                     <div class="video-overlay" id="videoStatus">Connecting...</div>
@@ -38,28 +39,28 @@
             <!-- Statistics Cards -->
             <section class="stats-container">
                 <div class="stat-card">
-                    <div class="stat-icon">🚨</div>
+                    <span class="material-icons stat-icon">error</span>
                     <div class="stat-content">
                         <div class="stat-value" id="criticalAlerts">0</div>
                         <div class="stat-label">Critical Alerts (24h)</div>
                     </div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon">⚠️</div>
+                    <span class="material-icons stat-icon">warning</span>
                     <div class="stat-content">
                         <div class="stat-value" id="warningAlerts">0</div>
                         <div class="stat-label">Warning Alerts (24h)</div>
                     </div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon">🔍</div>
+                    <span class="material-icons stat-icon">search</span>
                     <div class="stat-content">
                         <div class="stat-value" id="totalDetections">0</div>
                         <div class="stat-label">Total Detections</div>
                     </div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon">⏱️</div>
+                    <span class="material-icons stat-icon">schedule</span>
                     <div class="stat-content">
                         <div class="stat-value" id="sessionDuration">0m</div>
                         <div class="stat-label">Session Duration</div>
@@ -69,7 +70,7 @@
 
             <!-- Recent Alerts -->
             <section class="card alerts-card">
-                <h2>🔔 Recent Alerts</h2>
+                <h2><span class="material-icons">notifications</span> Recent Alerts</h2>
                 <div class="alerts-list" id="alertsList">
                     <div class="loading">Loading alerts...</div>
                 </div>
@@ -77,18 +78,18 @@
 
             <!-- Charts Section -->
             <section class="card chart-card">
-                <h2>📊 Object Detection Distribution</h2>
+                <h2><span class="material-icons">pie_chart</span> Object Detection Distribution</h2>
                 <canvas id="objectChart"></canvas>
             </section>
 
             <section class="card chart-card">
-                <h2>📈 Detection Timeline (24h)</h2>
+                <h2><span class="material-icons">show_chart</span> Detection Timeline (24h)</h2>
                 <canvas id="timelineChart"></canvas>
             </section>
 
             <!-- Safety Metrics -->
             <section class="card safety-card">
-                <h2>🛡️ Safety Metrics</h2>
+                <h2><span class="material-icons">shield</span> Safety Metrics</h2>
                 <div id="safetyMetrics">
                     <div class="loading">Loading metrics...</div>
                 </div>
@@ -96,7 +97,7 @@
 
             <!-- Voice Commands -->
             <section class="card commands-card">
-                <h2>🎤 Recent Voice Commands</h2>
+                <h2><span class="material-icons">mic</span> Recent Voice Commands</h2>
                 <div class="commands-list" id="commandsList">
                     <div class="loading">Loading commands...</div>
                 </div>
@@ -104,7 +105,7 @@
 
             <!-- Sessions History -->
             <section class="card sessions-card">
-                <h2>📝 Session History</h2>
+                <h2><span class="material-icons">history</span> Session History</h2>
                 <div class="sessions-list" id="sessionsList">
                     <div class="loading">Loading sessions...</div>
                 </div>
