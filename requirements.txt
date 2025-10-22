@@ -1,0 +1,22 @@
+# Core Vision Processing
+opencv-python>=4.8.0
+ultralytics>=8.0.0
+
+# Deep Learning
+torch>=2.0.0
+torchvision>=0.15.0
+torchaudio>=2.0.0
+
+# Audio & Voice
+pygame>=2.5.0
+pyttsx3>=2.90
+SpeechRecognition>=3.10.0
+PyAudio>=0.2.13
+
+# Backend API
+Flask>=3.0.0
+flask-cors>=4.0.0
+
+# Utilities
+numpy>=1.24.0
+

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vision Assistant Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1>🎯 Vision Assistant Dashboard</h1>
+                <p class="subtitle">Caregiver Monitoring & Analytics</p>
+            </div>
+            <div class="header-right">
+                <div class="status-badge" id="statusBadge">
+                    <span class="status-dot"></span>
+                    <span id="statusText">Checking...</span>
+                </div>
+                <div class="timestamp" id="lastUpdate">Last updated: --</div>
+            </div>
+        </header>
+
+        <!-- Main Grid -->
+        <div class="dashboard-grid">
+            <!-- Live Feed Section -->
+            <section class="card live-feed-card">
+                <h2>📹 Live Feed</h2>
+                <div class="video-container">
+                    <img id="videoFeed" src="/api/video_feed" alt="Live video feed">
+                    <div class="video-overlay" id="videoStatus">Connecting...</div>
+                </div>
+            </section>
+
+            <!-- Statistics Cards -->
+            <section class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-icon">🚨</div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="criticalAlerts">0</div>
+                        <div class="stat-label">Critical Alerts (24h)</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⚠️</div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="warningAlerts">0</div>
+                        <div class="stat-label">Warning Alerts (24h)</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🔍</div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="totalDetections">0</div>
+                        <div class="stat-label">Total Detections</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⏱️</div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="sessionDuration">0m</div>
+                        <div class="stat-label">Session Duration</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Recent Alerts -->
+            <section class="card alerts-card">
+                <h2>🔔 Recent Alerts</h2>
+                <div class="alerts-list" id="alertsList">
+                    <div class="loading">Loading alerts...</div>
+                </div>
+            </section>
+
+            <!-- Charts Section -->
+            <section class="card chart-card">
+                <h2>📊 Object Detection Distribution</h2>
+                <canvas id="objectChart"></canvas>
+            </section>
+
+            <section class="card chart-card">
+                <h2>📈 Detection Timeline (24h)</h2>
+                <canvas id="timelineChart"></canvas>
+            </section>
+
+            <!-- Safety Metrics -->
+            <section class="card safety-card">
+                <h2>🛡️ Safety Metrics</h2>
+                <div id="safetyMetrics">
+                    <div class="loading">Loading metrics...</div>
+                </div>
+            </section>
+
+            <!-- Voice Commands -->
+            <section class="card commands-card">
+                <h2>🎤 Recent Voice Commands</h2>
+                <div class="commands-list" id="commandsList">
+                    <div class="loading">Loading commands...</div>
+                </div>
+            </section>
+
+            <!-- Sessions History -->
+            <section class="card sessions-card">
+                <h2>📝 Session History</h2>
+                <div class="sessions-list" id="sessionsList">
+                    <div class="loading">Loading sessions...</div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>
+
