@@ -1,168 +1,134 @@
-# Vision Assistant for Vision-Impaired Patients
+# Vision Assist IoT System
 
-An IoT-based collision prevention and navigation assistance system using computer vision and audio feedback.
+AI-powered vision assistance for visually impaired patients with fall detection and emergency alerts.
+
+## Hardware
+
+- Raspberry Pi with Sense HAT and Pi Camera
+- Laptop/PC for inference
 
 ## Features
 
-### ✅ Core Functionality
-- **Real-time Object Detection** - YOLO-based detection of 24+ relevant object classes
-- **Distance Estimation** - Calculates proximity based on object size in frame
-- **Spatial Awareness** - Directional audio cues (left, right, ahead)
-- **Collision Prevention** - Alerts for objects in critical proximity zones
+- Real-time object detection with audio alerts
+- Fall detection (accelerometer/gyroscope)
+- Emergency SOS button (joystick middle)
+- Assistance requests: General Help, Bathroom, Food/Water, Medication
+- Voice alerts for all emergencies and requests
+- Environmental monitoring (temp, humidity, pressure)
+- Live dashboard with video feed
+- Voice commands and scene summarization
 
-### 🎤 Voice Interface
-- **Voice Commands**:
-  - "Describe scene" - Get a summary of current environment
-  - "What's ahead" - Check for obstacles in path
-  - "Help" - List available commands
-- Press 'c' key for voice command mode
+## Setup
 
-### 📊 Smart Detection
-- **Proximity Zones**:
-  - 🔴 Critical (60%+ of frame): Immediate danger, priority alerts
-  - 🟠 Warning (40-60%): Approaching objects, advance warning
-  - 🟢 Far (<40%): Background objects, tracked but no alert
+### Raspberry Pi
 
-- **Alert Cooldown**: 3-second cooldown per object to prevent alert spam
-- **Inference Interval**: 5-second intervals to optimize performance
-
-### 📝 Logging
-- All detections and alerts logged to `vision_assist.log`
-- Timestamps, object types, distances recorded
-- Useful for caregiver monitoring and system debugging
-
-## Hardware Setup
-
-### Required Components
-- Raspberry Pi with camera module (running Flask MJPEG stream)
-- Laptop/PC for inference processing
-- Speakers/headphones for audio feedback
-- Microphone for voice commands
-
-### Network Setup
-- Pi streaming video at: `http://100.101.51.31:5000/video_feed`
-- Both devices on same network
-
-## Installation
-
-### System Dependencies (Debian/Ubuntu)
 ```bash
+# Install dependencies
 sudo apt-get update
-sudo apt-get install -y python3-venv python3-pip libgl1 libglib2.0-0 ffmpeg
-sudo apt-get install -y portaudio19-dev python3-pyaudio  # For voice recognition
-sudo apt-get install -y espeak espeak-data libespeak-dev  # For TTS
+sudo apt-get install -y python3-picamera2 python3-sense-hat
+
+# Run the Pi script
+python3 abcd.py
 ```
 
-### Python Environment
+### Laptop/PC
+
 ```bash
-cd /home/richard/Desktop/yeah
+# Create virtual environment
 python3 -m venv .venv
 source .venv/bin/activate
-pip install --upgrade pip
+
+# Install dependencies
+sudo apt-get install portaudio19-dev python3-dev
 pip install -r requirements.txt
 
-# For CPU-only (recommended for laptops)
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+# Update Pi IP in run.py and backend_api.py
+# Change http://100.101.51.31:5000 to your Pi's IP
 
-# For CUDA GPU (if available)
-# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-```
-
-### Required Files
-- `alert.wav` - Audio alert sound file
-- `relevant__classes` - Text file with one object class per line
-- `yolov8n.pt` - Downloaded automatically on first run
-
-## Usage
-
-```bash
-source .venv/bin/activate
+# Run the vision assistant
 python run.py
 ```
 
-### Controls
-- **q** - Quit application
-- **c** - Activate voice command mode
-- **s** - Manual scene description
+## Configuration
+
+Edit these files to match your Pi's IP address:
+
+1. `run.py` - Line 45 and lines 370, 414
+2. `backend_api.py` - Line 28
+
+Replace `100.101.51.31` with your Pi's IP address.
+
+## Usage
+
+### Joystick Controls
+
+- **Middle**: Emergency SOS
+- **Up**: General Help
+- **Down**: Bathroom
+- **Left**: Food/Water  
+- **Right**: Medication
 
 ### Voice Commands
-Speak clearly after pressing 'c':
-- "Describe scene" / "What's around me"
-- "What's ahead" / "What's in front"
-- "Help"
+
+Say naturally:
+- "Describe scene"
+- "What's ahead"
+
+### Dashboard
+
+Open browser: `http://localhost:5001`
+
+View:
+- Live video feed with object detection
+- Recent alerts and statistics
+- Environmental conditions
+- Fall detection status
+- Emergency and assistance requests
+
+## Object Detection
+
+Edit `relevant_classes.txt` to customize which objects trigger alerts.
 
 ## Architecture
 
 ```
-┌─────────────┐       MJPEG Stream      ┌──────────────┐
-│ Raspberry   │ ───────────────────────> │   Laptop     │
-│ Pi Camera   │                          │  (Inference) │
-└─────────────┘                          └──────────────┘
-                                                │
-                                                ├─> YOLO Detection
-                                                ├─> Distance Estimation
-                                                ├─> TTS Audio Output
-                                                ├─> Voice Recognition
-                                                └─> File Logging
+Pi (abcd.py)
+  ├─ Camera → MJPEG stream
+  ├─ Sense HAT → Fall detection, emergency button, environment
+  └─ Flask API → Status endpoints
+
+Laptop (run.py)
+  ├─ Fetch Pi stream → YOLOv8 inference
+  ├─ TTS voice alerts
+  ├─ Voice command recognition
+  └─ Backend API (backend_api.py)
+      └─ Dashboard (frontend/)
 ```
 
-## Hackathon Demo Tips
+## API Endpoints
 
-### Demo Scenarios
-1. **Collision Prevention**: Walk toward objects, show critical alerts
-2. **Navigation**: Demonstrate directional guidance (left/right/ahead)
-3. **Voice Commands**: Show hands-free scene description
-4. **Scene Understanding**: Multiple objects, prioritized alerts
+### Pi (port 5000)
+- `/video_feed` - MJPEG stream
+- `/api/fall_status` - Fall detection status
+- `/api/emergency_status` - Emergency button status
+- `/api/assistance_status` - Assistance request status
+- `/api/environmental` - Temperature, humidity, pressure
 
-### Key Talking Points
-- **Real-time processing**: 5-second inference for efficiency
-- **Offline capable**: No cloud dependency (except initial voice recognition)
-- **Practical design**: Alert cooldowns prevent information overload
-- **Accessibility focus**: Audio-first interface, simple controls
-- **IoT integration**: Distributed processing (Pi + laptop)
+### Backend (port 5001)
+- `/api/video_feed` - Annotated video feed
+- `/api/stats` - Detection statistics
+- `/api/alerts` - Recent alerts
+- All Pi endpoints proxied
 
-## Relevant Object Classes
-```
-person, bicycle, car, motorcycle, bus, truck, boat,
-traffic light, fire hydrant, stop sign, parking meter,
-bench, chair, couch, potted plant, bed, dining table,
-toilet, tv, microwave, oven, toaster, sink, refrigerator
-```
+## Database
 
-## Future Enhancements
-- [ ] Depth camera integration for accurate distance
-- [ ] Path planning algorithms
-- [ ] Web dashboard for caregiver monitoring
-- [ ] Mobile app integration
-- [ ] Haptic feedback vest/band
-- [ ] Multi-camera 360° coverage
-- [ ] Emergency contact auto-dial
-- [ ] Indoor navigation/mapping
-
-## Troubleshooting
-
-### No audio output
-- Check speaker/headphone connection
-- Verify espeak is installed: `espeak "test"`
-
-### Voice recognition not working
-- Check microphone permissions
-- Test microphone: `arecord -d 3 test.wav && aplay test.wav`
-- Requires internet for Google Speech Recognition
-
-### Camera connection fails
-- Verify Pi stream is running: open `http://100.101.51.31:5000/video_feed` in browser
-- Check network connectivity between devices
-
-### Performance issues
-- Reduce inference interval (change `inference_interval` in code)
-- Use CPU-only torch installation
-- Consider YOLOv8n (nano) instead of larger models
+SQLite database `vision_assist.db` stores:
+- Sessions
+- Object detections
+- Alerts (falls, emergencies, assistance requests)
+- Voice commands
+- Scene summaries
 
 ## License
-MIT License - Hackathon Project
 
-## Credits
-- YOLOv8 by Ultralytics
-- Built for accessibility and assistive technology
-
+MIT
