@@ -400,6 +400,78 @@ def shutdown():
     func()
     return jsonify({'message': 'Server shutting down...'})
 
-    
+@app.route('/api/stats/activity_summary')
+def get_activity_summary():
+    """Get comprehensive activity summary for dashboard"""
+    try:
+            with sqlite3.connect(logger.db_path) as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                
+                # Get current session activity
+                current_session = logger.get_current_session()
+                session_filter = f"AND session_id = {current_session}" if current_session else ""
+                
+                # Total detections today
+                today = datetime.now().date()
+                cursor.execute(f"""
+                    SELECT COUNT(*) as count
+                    FROM detections
+                    WHERE DATE(timestamp) = ? {session_filter}
+                """, (today,))
+                detections_today = cursor.fetchone()['count']
+                
+                # Most active hour today
+                cursor.execute(f"""
+                    SELECT 
+                        strftime('%H', timestamp) as hour,
+                        COUNT(*) as count
+                    FROM detections
+                    WHERE DATE(timestamp) = ? {session_filter}
+                    GROUP BY hour
+                    ORDER BY count DESC
+                    LIMIT 1
+                """, (today,))
+                peak_hour_result = cursor.fetchone()
+                peak_hour = f"{peak_hour_result['hour']}:00" if peak_hour_result else "No activity"
+                
+                cursor.execute(f"""
+                    SELECT 
+                        COUNT(CASE WHEN distance_category = 'critical' THEN 1 END) as critical,
+                        COUNT(*) as total
+                    FROM alerts
+                    WHERE DATE(timestamp) = ? {session_filter}
+                """, (today,))
+                safety_data = cursor.fetchone()
+                critical_ratio = safety_data['critical'] / max(safety_data['total'], 1)
+                safety_score = max(0, 100 - (critical_ratio * 100))
+                
+                # Top 3 objects detected today
+                cursor.execute(f"""
+                    SELECT object_type, COUNT(*) as count
+                    FROM detections
+                    WHERE DATE(timestamp) = ? {session_filter}
+                    GROUP BY object_type
+                    ORDER BY count DESC
+                    LIMIT 3
+                """, (today,))
+                top_objects = [dict(row) for row in cursor.fetchall()]
+                
+                return jsonify({
+                    'detections_today': detections_today,
+                    'peak_activity_hour': peak_hour,
+                    'safety_score': round(safety_score, 1),
+                    'top_objects': top_objects,
+                    'current_session': current_session,
+                    'last_updated': datetime.now().isoformat()
+                })
+                
+    except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+
+
+
+
 if __name__ == '__main__':
     run_api_server()
