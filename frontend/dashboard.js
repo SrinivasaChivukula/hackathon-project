@@ -8,6 +8,10 @@ let timelineChart = null;
 // Update intervals
 const UPDATE_INTERVAL = 2000; // 2 seconds
 const CHARTS_UPDATE_INTERVAL = 10000; // 10 seconds
+const FALL_CHECK_INTERVAL = 3000; // 3 seconds
+const EMERGENCY_CHECK_INTERVAL = 2000; // 2 seconds
+const ASSISTANCE_CHECK_INTERVAL = 2000; // 2 seconds
+const ENVIRONMENTAL_UPDATE_INTERVAL = 30000; // 30 seconds
 
 // Initialize dashboard
 document.addEventListener('DOMContentLoaded', () => {
@@ -22,6 +26,15 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(updateSafetyMetrics, UPDATE_INTERVAL);
     setInterval(updateCommands, 5000);
     setInterval(updateSessions, 5000);
+    setInterval(checkFallStatus, FALL_CHECK_INTERVAL);
+    setInterval(checkEmergencyStatus, EMERGENCY_CHECK_INTERVAL);
+    setInterval(checkAssistanceStatus, ASSISTANCE_CHECK_INTERVAL);
+    setInterval(updateEnvironmental, ENVIRONMENTAL_UPDATE_INTERVAL);
+    
+    // Set up alert acknowledgement buttons
+    document.getElementById('acknowledgeFall').addEventListener('click', acknowledgeFall);
+    document.getElementById('acknowledgeEmergency').addEventListener('click', acknowledgeEmergency);
+    document.getElementById('acknowledgeAssistance').addEventListener('click', acknowledgeAssistance);
     
     // Handle video feed errors
     const videoFeed = document.getElementById('videoFeed');
@@ -42,6 +55,10 @@ async function updateDashboard() {
     await updateSafetyMetrics();
     await updateCommands();
     await updateSessions();
+    await checkFallStatus();
+    await checkEmergencyStatus();
+    await checkAssistanceStatus();
+    await updateEnvironmental();
 }
 
 // Update system status
@@ -359,5 +376,199 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Fall detection functions
+async function checkFallStatus() {
+    try {
+        const response = await fetch(`${API_BASE}/api/fall_status`);
+        const data = await response.json();
+        
+        const fallBanner = document.getElementById('fallAlertBanner');
+        const fallTimeElement = document.getElementById('fallAlertTime');
+        
+        if (data.fall_detected) {
+            // Show fall alert banner
+            fallBanner.style.display = 'flex';
+            
+            // Update time if available
+            if (data.last_fall_timestamp) {
+                const fallTime = new Date(data.last_fall_timestamp * 1000);
+                fallTimeElement.textContent = `Detected at ${fallTime.toLocaleTimeString()}`;
+            }
+            
+            // Play alert sound
+            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTcIGWi77eefTRAMUKfj8LZjHAY4ktfyy3ksBSR3x/DdkEAKFF606+uoVRQKRp/g8r5sIQUrgc7y2Yk3CBlou+3nn00QDFCn4/C2YxwGOJLX8st5LAUkd8fw3ZBAC');
+            audio.play().catch(e => console.log('Could not play audio'));
+        } else {
+            // Hide fall alert banner
+            fallBanner.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Error checking fall status:', error);
+    }
+}
+
+async function acknowledgeFall() {
+    try {
+        await fetch(`${API_BASE}/api/fall_acknowledge`);
+        
+        // Hide the banner immediately
+        const fallBanner = document.getElementById('fallAlertBanner');
+        fallBanner.style.display = 'none';
+        
+        console.log('Fall acknowledged');
+    } catch (error) {
+        console.error('Error acknowledging fall:', error);
+    }
+}
+
+// Emergency detection functions
+async function checkEmergencyStatus() {
+    try {
+        const response = await fetch(`${API_BASE}/api/emergency_status`);
+        const data = await response.json();
+        
+        const emergencyBanner = document.getElementById('emergencyAlertBanner');
+        const emergencyTimeElement = document.getElementById('emergencyAlertTime');
+        
+        if (data.emergency_active) {
+            // Show emergency alert banner
+            emergencyBanner.style.display = 'flex';
+            
+            // Update time if available
+            if (data.last_emergency_timestamp) {
+                const emergencyTime = new Date(data.last_emergency_timestamp * 1000);
+                emergencyTimeElement.textContent = `Button pressed at ${emergencyTime.toLocaleTimeString()}`;
+            }
+            
+            // Play alert sound
+            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTcIGWi77eefTRAMUKfj8LZjHAY4ktfyy3ksBSR3x/DdkEAKFF606+uoVRQKRp/g8r5sIQUrgc7y2Yk3CBlou+3nn00QDFCn4/C2YxwGOJLX8st5LAUkd8fw3ZBAC');
+            audio.play().catch(e => console.log('Could not play audio'));
+        } else {
+            // Hide emergency alert banner
+            emergencyBanner.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Error checking emergency status:', error);
+    }
+}
+
+async function acknowledgeEmergency() {
+    try {
+        await fetch(`${API_BASE}/api/emergency_acknowledge`);
+        
+        // Hide the banner immediately
+        const emergencyBanner = document.getElementById('emergencyAlertBanner');
+        emergencyBanner.style.display = 'none';
+        
+        console.log('Emergency acknowledged');
+    } catch (error) {
+        console.error('Error acknowledging emergency:', error);
+    }
+}
+
+// Assistance request functions
+async function checkAssistanceStatus() {
+    try {
+        const response = await fetch(`${API_BASE}/api/assistance_status`);
+        const data = await response.json();
+        
+        const assistanceBanner = document.getElementById('assistanceAlertBanner');
+        const assistanceTitle = document.getElementById('assistanceTitle');
+        const assistanceIcon = document.getElementById('assistanceIcon');
+        const assistanceTimeElement = document.getElementById('assistanceAlertTime');
+        
+        if (data.assistance_active && data.assistance_type) {
+            // Show assistance alert banner
+            assistanceBanner.style.display = 'flex';
+            
+            // Set icon and title based on assistance type
+            const assistanceTypes = {
+                'General Help': { icon: 'support_agent', title: '🤝 GENERAL HELP REQUESTED' },
+                'Bathroom': { icon: 'wc', title: '🚻 BATHROOM ASSISTANCE NEEDED' },
+                'Food/Water': { icon: 'restaurant', title: '🍽️ FOOD/WATER REQUESTED' },
+                'Medication': { icon: 'medication', title: '💊 MEDICATION NEEDED' }
+            };
+            
+            const typeInfo = assistanceTypes[data.assistance_type] || { icon: 'help', title: 'ASSISTANCE REQUESTED' };
+            assistanceIcon.textContent = typeInfo.icon;
+            assistanceTitle.textContent = typeInfo.title;
+            
+            // Update time if available
+            if (data.last_assistance_timestamp) {
+                const assistanceTime = new Date(data.last_assistance_timestamp * 1000);
+                assistanceTimeElement.textContent = `Requested at ${assistanceTime.toLocaleTimeString()}`;
+            }
+            
+            // Play notification sound
+            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTcIGWi77eefTRAMUKfj8LZjHAY4ktfyy3ksBSR3x/HdkEAKFF606+uoVRQKRp/g8r5sIQUrgc7y2Yk3CBlou+3nn00QDFCn4/C2YxwGOJLX8st5LAUkd8fw3ZBAC');
+            audio.play().catch(e => console.log('Could not play audio'));
+        } else {
+            // Hide assistance alert banner
+            assistanceBanner.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Error checking assistance status:', error);
+    }
+}
+
+async function acknowledgeAssistance() {
+    try {
+        await fetch(`${API_BASE}/api/assistance_acknowledge`);
+        
+        // Hide the banner immediately
+        const assistanceBanner = document.getElementById('assistanceAlertBanner');
+        assistanceBanner.style.display = 'none';
+        
+        console.log('Assistance acknowledged');
+    } catch (error) {
+        console.error('Error acknowledging assistance:', error);
+    }
+}
+
+// Environmental monitoring
+async function updateEnvironmental() {
+    try {
+        const response = await fetch(`${API_BASE}/api/environmental`);
+        const data = await response.json();
+        
+        if (data.temperature_f !== null && data.temperature_f !== undefined) {
+            // Subtract 20°F to compensate for Sense HAT CPU heat
+            const adjustedTemp = data.temperature_f - 20;
+            
+            document.getElementById('temperature').textContent = `${adjustedTemp.toFixed(1)}°F`;
+            document.getElementById('humidity').textContent = `${data.humidity}%`;
+            document.getElementById('pressure').textContent = `${data.pressure} mb`;
+            
+            if (data.last_update) {
+                const updateTime = new Date(data.last_update);
+                document.getElementById('envUpdate').textContent = 
+                    `Last updated: ${updateTime.toLocaleTimeString()}`;
+            }
+            
+            // Color code temperature (use adjusted temp)
+            const tempElement = document.getElementById('temperature');
+            const temp = adjustedTemp;
+            if (temp > 85) {
+                tempElement.style.color = '#dc2626'; // Hot - red
+            } else if (temp < 60) {
+                tempElement.style.color = '#2563eb'; // Cold - blue
+            } else {
+                tempElement.style.color = '#059669'; // Comfortable - green
+            }
+            
+            // Color code humidity
+            const humidityElement = document.getElementById('humidity');
+            const humidity = data.humidity;
+            if (humidity > 70 || humidity < 30) {
+                humidityElement.style.color = '#f59e0b'; // Warning - orange
+            } else {
+                humidityElement.style.color = '#059669'; // Good - green
+            }
+        }
+    } catch (error) {
+        console.error('Error updating environmental data:', error);
+    }
 }
 

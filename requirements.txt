@@ -16,6 +16,7 @@ PyAudio>=0.2.13
 # Backend API
 Flask>=3.0.0
 flask-cors>=4.0.0
+requests>=2.31.0
 
 # Utilities
 numpy>=1.24.0

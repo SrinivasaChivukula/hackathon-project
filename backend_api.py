@@ -10,6 +10,7 @@ import cv2
 import json
 import threading
 import time
+import requests
 from datetime import datetime, timedelta
 import sqlite3
 
@@ -22,6 +23,10 @@ logger = VisionDataLogger()
 # Global variable for current frame (shared with vision assistant)
 current_frame = None
 frame_lock = threading.Lock()
+
+# Pi fall detection configuration
+PI_URL = "http://100.101.51.31:5000"
+fall_status_cache = {'fall_detected': False, 'last_update': None}
 
 def set_current_frame(frame):
     """Update the current frame (called from vision assistant)"""
@@ -293,6 +298,91 @@ def health_check():
         'status': 'healthy',
         'timestamp': datetime.now().isoformat()
     })
+
+@app.route('/api/fall_status')
+def get_fall_status():
+    """Get fall detection status from Pi"""
+    try:
+        response = requests.get(f'{PI_URL}/api/fall_status', timeout=2)
+        data = response.json()
+        
+        # Cache the result
+        fall_status_cache['fall_detected'] = data.get('fall_detected', False)
+        fall_status_cache['last_update'] = datetime.now().isoformat()
+        fall_status_cache['fall_history'] = data.get('fall_history', [])
+        
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({
+            'fall_detected': False,
+            'error': str(e),
+            'pi_available': False
+        })
+
+@app.route('/api/fall_acknowledge')
+def acknowledge_fall():
+    """Acknowledge fall alert on Pi"""
+    try:
+        response = requests.get(f'{PI_URL}/api/fall_acknowledge', timeout=2)
+        return jsonify(response.json())
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/emergency_status')
+def get_emergency_status():
+    """Get emergency button status from Pi"""
+    try:
+        response = requests.get(f'{PI_URL}/api/emergency_status', timeout=2)
+        return jsonify(response.json())
+    except Exception as e:
+        return jsonify({
+            'emergency_active': False,
+            'error': str(e),
+            'pi_available': False
+        })
+
+@app.route('/api/emergency_acknowledge')
+def acknowledge_emergency():
+    """Acknowledge emergency alert on Pi"""
+    try:
+        response = requests.get(f'{PI_URL}/api/emergency_acknowledge', timeout=2)
+        return jsonify(response.json())
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/environmental')
+def get_environmental():
+    """Get environmental data from Pi"""
+    try:
+        response = requests.get(f'{PI_URL}/api/environmental', timeout=2)
+        return jsonify(response.json())
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'pi_available': False
+        })
+
+@app.route('/api/assistance_status')
+def get_assistance_status():
+    """Get assistance request status from Pi"""
+    try:
+        response = requests.get(f'{PI_URL}/api/assistance_status', timeout=2)
+        return jsonify(response.json())
+    except Exception as e:
+        return jsonify({
+            'assistance_active': False,
+            'error': str(e),
+            'pi_available': False
+        })
+
+@app.route('/api/assistance_acknowledge')
+def acknowledge_assistance():
+    """Acknowledge assistance request on Pi"""
+    try:
+        response = requests.get(f'{PI_URL}/api/assistance_acknowledge', timeout=2)
+        return jsonify(response.json())
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 def run_api_server(host='0.0.0.0', port=5001):
     """Run the Flask API server"""

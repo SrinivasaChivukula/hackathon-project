@@ -8,6 +8,7 @@ import logging
 from datetime import datetime
 from collections import defaultdict
 import speech_recognition as sr
+import requests
 from data_logger import VisionDataLogger
 from backend_api import set_current_frame, run_api_server
 
@@ -57,6 +58,24 @@ class VisionAssistant:
         self.inference_interval = 5.0
         self.last_alert_time = {}  # Per-object cooldown
         self.alert_cooldown = 5.0  # Don't repeat same alert within 5 seconds (reduce audio spam)
+        
+        # Fall detection monitoring
+        self.last_fall_check = 0
+        self.fall_check_interval = 2  # Check for falls every 2 seconds
+        self.last_fall_alert_time = 0
+        self.fall_alert_cooldown = 15  # Don't repeat fall warnings for 15 seconds
+        
+        # Assistance request monitoring
+        self.last_assistance_check = 0
+        self.assistance_check_interval = 2  # Check for assistance requests every 2 seconds
+        self.last_assistance_alert_time = {}  # Track cooldown per request type
+        self.assistance_alert_cooldown = 20  # Don't repeat same request for 20 seconds
+        
+        # Emergency monitoring
+        self.last_emergency_check = 0
+        self.emergency_check_interval = 2  # Check for emergency every 2 seconds
+        self.last_emergency_alert_time = 0
+        self.emergency_alert_cooldown = 20  # Don't repeat emergency for 20 seconds
         
         # Detection tracking
         self.current_detections = []
@@ -292,6 +311,165 @@ class VisionAssistant:
         
         return frame
     
+    def check_fall_status(self):
+        """Check if fall was detected on Pi and alert user"""
+        current_time = time.time()
+        
+        # Only check every 2 seconds
+        if current_time - self.last_fall_check < self.fall_check_interval:
+            return
+        
+        self.last_fall_check = current_time
+        
+        try:
+            # Query Pi for fall status
+            response = requests.get('http://100.101.51.31:5000/api/fall_status', timeout=1)
+            if response.status_code == 200:
+                data = response.json()
+                
+                if data.get('fall_detected'):
+                    # Check cooldown to avoid repeated warnings
+                    if current_time - self.last_fall_alert_time > self.fall_alert_cooldown:
+                        self.last_fall_alert_time = current_time
+                        
+                        # Voice alert
+                        alert_message = "Warning! Fall detected! Patient may need assistance!"
+                        self.speak(alert_message, priority=True)
+                        
+                        # Play critical alert sound
+                        self.alert_sound.play()
+                        
+                        # Log to database as critical alert
+                        if self.session_id:
+                            self.data_logger.log_alert(
+                                self.session_id,
+                                'Fall Detection',
+                                'critical',
+                                'system',
+                                alert_message
+                            )
+                        
+                        logging.error(f"FALL DETECTED! {alert_message}")
+        
+        except Exception as e:
+            # Silently fail - don't spam logs if Pi is unreachable
+            pass
+    
+    def check_emergency_status(self):
+        """Check if emergency button was pressed and alert user"""
+        current_time = time.time()
+        
+        # Only check every 2 seconds
+        if current_time - self.last_emergency_check < self.emergency_check_interval:
+            return
+        
+        self.last_emergency_check = current_time
+        
+        try:
+            # Query Pi for emergency status
+            response = requests.get('http://100.101.51.31:5000/api/emergency_status', timeout=1)
+            if response.status_code == 200:
+                data = response.json()
+                
+                if data.get('emergency_active'):
+                    # Check cooldown to avoid repeated warnings
+                    if current_time - self.last_emergency_alert_time > self.emergency_alert_cooldown:
+                        self.last_emergency_alert_time = current_time
+                        
+                        # Voice alert
+                        alert_message = "EMERGENCY! Patient pressed emergency button! Immediate assistance required!"
+                        self.speak(alert_message, priority=True)
+                        
+                        # Play critical alert sound
+                        self.alert_sound.play()
+                        
+                        # Log to database as critical alert
+                        if self.session_id:
+                            self.data_logger.log_alert(
+                                self.session_id,
+                                'Emergency SOS',
+                                'critical',
+                                'emergency_button',
+                                alert_message
+                            )
+                        
+                        logging.error(f"EMERGENCY BUTTON PRESSED! {alert_message}")
+        
+        except Exception as e:
+            # Silently fail - don't spam logs if Pi is unreachable
+            pass
+    
+    def check_assistance_status(self):
+        """Check if assistance was requested via joystick and alert user"""
+        current_time = time.time()
+        
+        # Only check every 2 seconds
+        if current_time - self.last_assistance_check < self.assistance_check_interval:
+            return
+        
+        self.last_assistance_check = current_time
+        
+        try:
+            # Query Pi for assistance status
+            response = requests.get('http://100.101.51.31:5000/api/assistance_status', timeout=1)
+            if response.status_code == 200:
+                data = response.json()
+                
+                if data.get('assistance_active') and data.get('assistance_type'):
+                    assistance_type = data['assistance_type']
+                    
+                    # Check cooldown to avoid repeated warnings for same request type
+                    last_alert = self.last_assistance_alert_time.get(assistance_type, 0)
+                    if current_time - last_alert > self.assistance_alert_cooldown:
+                        self.last_assistance_alert_time[assistance_type] = current_time
+                        
+                        # Define voice messages for each assistance type
+                        assistance_messages = {
+                            'General Help': {
+                                'message': 'Attention! Patient requesting general assistance!',
+                                'priority': 'warning'
+                            },
+                            'Bathroom': {
+                                'message': 'Alert! Patient needs bathroom assistance immediately!',
+                                'priority': 'warning'
+                            },
+                            'Food/Water': {
+                                'message': 'Patient is requesting food or water!',
+                                'priority': 'warning'
+                            },
+                            'Medication': {
+                                'message': 'Important! Patient needs medication!',
+                                'priority': 'warning'
+                            }
+                        }
+                        
+                        request_info = assistance_messages.get(assistance_type, {
+                            'message': f'Patient requesting {assistance_type}',
+                            'priority': 'warning'
+                        })
+                        
+                        # Voice alert
+                        self.speak(request_info['message'], priority=True)
+                        
+                        # Play alert sound (less aggressive than emergency)
+                        self.alert_sound.play()
+                        
+                        # Log to database
+                        if self.session_id:
+                            self.data_logger.log_alert(
+                                self.session_id,
+                                assistance_type,
+                                request_info['priority'],
+                                'assistance_request',
+                                request_info['message']
+                            )
+                        
+                        logging.warning(f"ASSISTANCE REQUEST: {assistance_type} - {request_info['message']}")
+        
+        except Exception as e:
+            # Silently fail - don't spam logs if Pi is unreachable
+            pass
+    
     def run(self):
         """Main loop"""
         # Start session
@@ -324,6 +502,15 @@ class VisionAssistant:
                 
                 # Process frame (inference happens here every 5 seconds)
                 annotated_frame = self.process_frame(frame)
+                
+                # Check for fall detection (every 2 seconds)
+                self.check_fall_status()
+                
+                # Check for emergency button (every 2 seconds)
+                self.check_emergency_status()
+                
+                # Check for assistance requests (every 2 seconds)
+                self.check_assistance_status()
                 
                 # Update frame for API streaming
                 set_current_frame(annotated_frame)

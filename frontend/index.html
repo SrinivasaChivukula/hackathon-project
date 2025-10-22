@@ -25,6 +25,48 @@
             </div>
         </header>
 
+        <!-- Fall Alert Banner -->
+        <div class="fall-alert-banner" id="fallAlertBanner" style="display: none;">
+            <div class="fall-alert-content">
+                <span class="material-icons fall-alert-icon">warning</span>
+                <div class="fall-alert-text">
+                    <strong>FALL DETECTED!</strong>
+                    <span id="fallAlertTime"></span>
+                </div>
+            </div>
+            <button class="fall-alert-button" id="acknowledgeFall">
+                <span class="material-icons">check</span> Acknowledge
+            </button>
+        </div>
+
+        <!-- Emergency Alert Banner -->
+        <div class="emergency-alert-banner" id="emergencyAlertBanner" style="display: none;">
+            <div class="fall-alert-content">
+                <span class="material-icons fall-alert-icon">crisis_alert</span>
+                <div class="fall-alert-text">
+                    <strong>🆘 EMERGENCY BUTTON PRESSED!</strong>
+                    <span id="emergencyAlertTime"></span>
+                </div>
+            </div>
+            <button class="fall-alert-button" id="acknowledgeEmergency">
+                <span class="material-icons">check</span> Acknowledge
+            </button>
+        </div>
+
+        <!-- Assistance Request Banner -->
+        <div class="assistance-alert-banner" id="assistanceAlertBanner" style="display: none;">
+            <div class="fall-alert-content">
+                <span class="material-icons fall-alert-icon" id="assistanceIcon">help</span>
+                <div class="fall-alert-text">
+                    <strong id="assistanceTitle">ASSISTANCE REQUESTED</strong>
+                    <span id="assistanceAlertTime"></span>
+                </div>
+            </div>
+            <button class="fall-alert-button" id="acknowledgeAssistance">
+                <span class="material-icons">check</span> Acknowledge
+            </button>
+        </div>
+
         <!-- Main Grid -->
         <div class="dashboard-grid">
             <!-- Live Feed Section -->
@@ -66,6 +108,35 @@
                         <div class="stat-label">Session Duration</div>
                     </div>
                 </div>
+            </section>
+
+            <!-- Environmental Data -->
+            <section class="card environmental-card">
+                <h2><span class="material-icons">thermostat</span> Environmental Conditions</h2>
+                <div class="environmental-grid">
+                    <div class="env-item">
+                        <span class="material-icons env-icon">device_thermostat</span>
+                        <div class="env-content">
+                            <div class="env-value" id="temperature">--°F</div>
+                            <div class="env-label">Temperature</div>
+                        </div>
+                    </div>
+                    <div class="env-item">
+                        <span class="material-icons env-icon">water_drop</span>
+                        <div class="env-content">
+                            <div class="env-value" id="humidity">--%</div>
+                            <div class="env-label">Humidity</div>
+                        </div>
+                    </div>
+                    <div class="env-item">
+                        <span class="material-icons env-icon">compress</span>
+                        <div class="env-content">
+                            <div class="env-value" id="pressure">-- mb</div>
+                            <div class="env-label">Pressure</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="env-update" id="envUpdate">Last updated: --</div>
             </section>
 
             <!-- Recent Alerts -->

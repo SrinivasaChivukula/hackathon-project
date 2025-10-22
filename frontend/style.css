@@ -96,6 +96,153 @@ body {
     color: var(--text-secondary);
 }
 
+/* Fall Alert Banner */
+.fall-alert-banner {
+    background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+    color: white;
+    padding: 20px 32px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow-lg);
+    animation: pulse-red 2s infinite;
+}
+
+@keyframes pulse-red {
+    0%, 100% { box-shadow: 0 0 20px rgba(220, 38, 38, 0.5); }
+    50% { box-shadow: 0 0 40px rgba(220, 38, 38, 0.8); }
+}
+
+.fall-alert-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.fall-alert-icon {
+    font-size: 48px;
+    animation: shake 0.5s infinite;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.fall-alert-text strong {
+    font-size: 24px;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.fall-alert-button {
+    background: white;
+    color: #dc2626;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.fall-alert-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.fall-alert-button .material-icons {
+    font-size: 20px;
+}
+
+/* Emergency Alert Banner */
+.emergency-alert-banner {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    padding: 20px 32px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow-lg);
+    animation: pulse-orange 2s infinite;
+}
+
+@keyframes pulse-orange {
+    0%, 100% { box-shadow: 0 0 20px rgba(245, 158, 11, 0.5); }
+    50% { box-shadow: 0 0 40px rgba(245, 158, 11, 0.8); }
+}
+
+/* Assistance Alert Banner */
+.assistance-alert-banner {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    padding: 20px 32px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow-lg);
+    animation: pulse-blue 2s infinite;
+}
+
+@keyframes pulse-blue {
+    0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
+    50% { box-shadow: 0 0 40px rgba(59, 130, 246, 0.8); }
+}
+
+/* Environmental Data Card */
+.environmental-card {
+    grid-column: span 4;
+}
+
+.environmental-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.env-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    border-radius: 8px;
+}
+
+.env-icon {
+    font-size: 36px;
+    color: var(--primary-color);
+}
+
+.env-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.env-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.env-update {
+    margin-top: 12px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-align: right;
+}
+
 /* Dashboard Grid */
 .dashboard-grid {
     display: grid;
